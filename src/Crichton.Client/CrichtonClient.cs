@@ -39,12 +39,22 @@ namespace Crichton.Client
             CustomHeaders.Add(key, value);
         }
 
+        private string FixRelativeUrl(string relativeUrl)
+        {
+            if (relativeUrl.StartsWith("/"))
+            {
+                return relativeUrl.TrimStart('/');
+            }
+
+            return relativeUrl;
+        }
+
         public CrichtonClient NavigateToUrl(string relativeUrl)
         {
             Func<CrichtonRepresentor, HttpClient, ISerializer, Task<CrichtonRepresentor>> newStep =
                 async delegate(CrichtonRepresentor representor, HttpClient client, ISerializer serializer)
                 {
-                    var result = await client.GetStringAsync(relativeUrl);
+                    var result = await client.GetStringAsync(FixRelativeUrl(relativeUrl));
                     var builder = serializer.DeserializeToNewBuilder(result,() => new RepresentorBuilder());
                     return builder.ToRepresentor();
 
@@ -60,11 +70,19 @@ namespace Crichton.Client
             {
                 var transition = representor.Transitions.FirstOrDefault(t => t.Rel == rel);
                 if (transition == null) throw new Exception("No transition for rel " + rel);
-                var result = await client.GetStringAsync(transition.Uri);
+                var result = await client.GetStringAsync(FixRelativeUrl(transition.Uri));
                 var builder = serializer.DeserializeToNewBuilder(result, () => new RepresentorBuilder());
                 return builder.ToRepresentor();
 
             };
+
+            return new CrichtonClient(this, newStep);
+        }
+
+        public CrichtonClient NavigateToRepresentor(CrichtonRepresentor newRepresentor)
+        {
+            Func<CrichtonRepresentor, HttpClient, ISerializer, Task<CrichtonRepresentor>> newStep =
+                async (representor, client, serializer) => newRepresentor;
 
             return new CrichtonClient(this, newStep);
         }
@@ -78,7 +96,7 @@ namespace Crichton.Client
             }
 
             client.DefaultRequestHeaders.Add("Accept", Serializer.ContentType);
-            
+
             var representor = new CrichtonRepresentor();
             
             // ReSharper disable once LoopCanBeConvertedToQuery
@@ -89,5 +107,8 @@ namespace Crichton.Client
 
             return representor;
         }
+
+
     }
+
 }
