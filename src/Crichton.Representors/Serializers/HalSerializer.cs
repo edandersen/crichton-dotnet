@@ -12,8 +12,6 @@ namespace Crichton.Representors.Serializers
 
         public virtual string ContentType { get { return "application/hal+json"; } }
 
-        public virtual string ContentType { get { return "application/hal+json"; } }
-
         public string Serialize(CrichtonRepresentor representor)
         {
             var jObject = CreateJObjectForRepresentor(representor);
