@@ -7,8 +7,10 @@ namespace Crichton.Representors.Serializers
 {
     public class HalSerializer : ISerializer
     {
-        private static readonly string[] ReservedAttributes = {"_links", "_embedded"};
-        private static readonly string[] ReservedLinkRels = {"self"};
+        private static readonly string[] ReservedAttributes = { "_links", "_embedded" };
+        private static readonly string[] ReservedLinkRels = { "self" };
+
+        public virtual string ContentType { get { return "application/hal+json"; } }
 
         public virtual string ContentType { get { return "application/hal+json"; } }
 
@@ -85,13 +87,13 @@ namespace Crichton.Representors.Serializers
             var existingRel = document["_links"][transition.Rel];
             if (existingRel == null)
             {
-                var jobject = (JObject) document["_links"];
+                var jobject = (JObject)document["_links"];
                 jobject.Add(transition.Rel, CreateLinkObjectFromTransition(transition));
             }
             else
             {
                 // we already have a ref. Need to convert this to an array if not already.
-                var array = existingRel as JArray ?? new JArray {existingRel};
+                var array = existingRel as JArray ?? new JArray { existingRel };
                 array.Add(CreateLinkObjectFromTransition(transition));
 
                 // override the existing _links > rel
@@ -101,7 +103,7 @@ namespace Crichton.Representors.Serializers
 
         public virtual JObject CreateLinkObjectFromTransition(CrichtonTransition transition)
         {
-            var linkObject = new JObject {{"href", transition.Uri}};
+            var linkObject = new JObject { { "href", transition.Uri } };
             if (!String.IsNullOrWhiteSpace(transition.Title)) linkObject["title"] = transition.Title;
             if (!String.IsNullOrWhiteSpace(transition.Type)) linkObject["type"] = transition.Type;
             if (transition.UriIsTemplated) linkObject["templated"] = true;
@@ -116,7 +118,7 @@ namespace Crichton.Representors.Serializers
         public IRepresentorBuilder DeserializeToNewBuilder(string message, Func<IRepresentorBuilder> builderFactoryMethod)
         {
             var document = JObject.Parse(message);
-            
+
             var builder = BuildRepresentorBuilderFromJObject(builderFactoryMethod, document);
 
             return builder;
@@ -197,7 +199,7 @@ namespace Crichton.Representors.Serializers
         {
             if (document["_links"] == null) return;
 
-            foreach (var child in ((JObject) document["_links"]).Properties())
+            foreach (var child in ((JObject)document["_links"]).Properties())
             {
                 var rel = child.Name;
 
@@ -212,7 +214,7 @@ namespace Crichton.Representors.Serializers
                     // create a transition for each array element
                     foreach (var link in array)
                     {
-                         builder.AddTransition(GetTransitionFromLinkObject(link, rel));
+                        builder.AddTransition(GetTransitionFromLinkObject(link, rel));
                     }
                 }
             }
@@ -228,7 +230,7 @@ namespace Crichton.Representors.Serializers
             var name = link["name"];
             var profile = link["profile"];
             var hreflang = link["hreflang"];
-            var templated = templatedField != null && (bool) templatedField;
+            var templated = templatedField != null && (bool)templatedField;
 
             var transition = new CrichtonTransition
             {
